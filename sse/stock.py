@@ -110,20 +110,31 @@ class Stock:
             print(i, k)
 
     def stock_list(self, stock_type):
-        """返回证券列表"""
+        """
+        返回股票列表
+
+        Keyword arguments:
+        stock_type -- 股票类型 范围是STOCK_TYPES中值
+        """
         url = 'http://query.sse.com.cn/security/stock/downloadStockListFile.do?csrcCode=&stockCode=&areaName='
         data = {
             'stockType': stock_type
         }
         r = requests.post(url, data=data, headers=self.headers)
-        return pd.read_table(io.StringIO(r.text))
+        return self.__regular_stocks(pd.read_table(io.StringIO(r.text)))
 
     def scrc_catalog(self):
-        """CSRC行业分类"""
+        """
+        返回证券CSRC行业分类信息
+
+        Returns:
+        pd.DataFrame -- 包含证券分类信息的DataFrame
+        """
         r=self._common_query(
             sqlId='COMMON_SSE_CP_GPJCTPZ_DQHYFL_HYFL_L'
         )
         return pd.DataFrame(r['result'])
+
 
     def get_allotments(self, year, code):
         """得到配股"""
@@ -134,7 +145,7 @@ class Stock:
             productid=code)
         return pd.DataFrame(r['result'])
 
-    def get_dividends(year):
+    def get_dividends(self, year):
         """得到分红"""
         data = {
             'isPagination': 'false',
@@ -145,7 +156,7 @@ class Stock:
         result = call_common_query(data)
         return pd.DataFrame(result['result'])
 
-    def get_bonus(year):
+    def get_bonus(self, year):
         """得到送股"""
         data = {
             'isPagination': 'false',
@@ -156,15 +167,17 @@ class Stock:
         result = call_common_query(data)
         return pd.DataFrame(result['result'])
 
+    def __regular_stocks(self, df):
+        """
+        规整证券列表的返回结果
 
-
-
-def __regular_stocks(df):
-    del(df['Unnamed: 5'])
-    del(df['公司代码 '])
-    del(df['公司简称 '])
-    df['交易所'] = 0
-    df['所属行业'] = ''
-    df['代码'] = df['代码'].astype(str)
-    return df
-
+        Keyword arguments:
+        df -- 股票数据DataFrame
+        """
+        del(df['Unnamed: 5'])
+        del(df['公司代码 '])
+        del(df['公司简称 '])
+        df['交易所'] = 0
+        df['所属行业'] = ''
+        df['代码'] = df['代码'].astype(str)
+        return df
