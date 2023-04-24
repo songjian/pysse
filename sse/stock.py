@@ -10,9 +10,9 @@ import re
 class Stock:
 
     headers = {'X-Requested-With': 'XMLHttpRequest',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' 'Chrome/56.0.2924.87 Safari/537.36',
-            'Referer': 'http://www.sse.com.cn/assortment/stock/list/share/'
-            }
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' 'Chrome/56.0.2924.87 Safari/537.36',
+               'Referer': 'http://www.sse.com.cn/assortment/stock/list/share/'
+               }
 
     STOCK_TYPES = {
         1: '主板A股',
@@ -74,7 +74,7 @@ class Stock:
         data['_'] = str(int(round(time.time() * 1000)))
         r=requests.get(url, params=data, headers=self.headers)
         return self._loads_jsonp(r.text)
-    
+
     def _loads_jsonp(self, _jsonp):
         try:
             return json.loads(re.match(".*?({.*}).*", _jsonp, re.S).group(1))
@@ -92,9 +92,9 @@ class Stock:
             PRODUCT_CODE=PRODUCT_CODE,
             type='inParams',
             SEARCH_DATE=SEARCH_DATE
-            )
+        )
         return pd.DataFrame(r['result'])
-    
+
     def profile(self, code):
         """返回证券基础资料
 
@@ -117,14 +117,14 @@ class Stock:
         }
         r = requests.post(url, data=data, headers=self.headers)
         return pd.read_table(io.StringIO(r.text))
-    
+
     def scrc_catalog(self):
         """CSRC行业分类"""
         r=self._common_query(
             sqlId='COMMON_SSE_CP_GPJCTPZ_DQHYFL_HYFL_L'
         )
         return pd.DataFrame(r['result'])
-    
+
     def get_allotments(self, year, code):
         """得到配股"""
         r = self._common_query(
@@ -133,6 +133,29 @@ class Stock:
             searchyear=year,
             productid=code)
         return pd.DataFrame(r['result'])
+
+    def get_dividends(year):
+        """得到分红"""
+        data = {
+            'isPagination': 'false',
+            'sqlId': 'COMMON_SSE_GP_SJTJ_FHSG_AGFH_L_NEW',
+            'record_date_a': year,
+            'security_code_a': '',
+        }
+        result = call_common_query(data)
+        return pd.DataFrame(result['result'])
+
+    def get_bonus(year):
+        """得到送股"""
+        data = {
+            'isPagination': 'false',
+            'sqlId': '',
+            'year1': year,
+            'year2': year,
+        }
+        result = call_common_query(data)
+        return pd.DataFrame(result['result'])
+
 
 
 
@@ -144,27 +167,4 @@ def __regular_stocks(df):
     df['所属行业'] = ''
     df['代码'] = df['代码'].astype(str)
     return df
-
-# 得到分红
-def get_dividends(year):
-    data = {
-        'isPagination': 'false',
-        'sqlId': 'COMMON_SSE_GP_SJTJ_FHSG_AGFH_L_NEW',
-        'record_date_a': year,
-        'security_code_a': '',
-    }
-    result = call_common_query(data)
-    return result['result']
-    # return pd.DataFrame(result['result'])
-
-# 得到送股
-def get_bonus(year):
-    data = {
-        'isPagination': 'false',
-        'sqlId': '',
-        'year1': year,
-        'year2': year,
-    }
-    result = call_common_query(data)
-    return pd.DataFrame(result['result'])
 
